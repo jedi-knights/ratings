@@ -1,5 +1,5 @@
 # tools/templates/.github/workflows/ci_match_retriever_ecnl.yml
-name: CI
+name: CI - match_retriever_ecnl
 
 on:
   push:

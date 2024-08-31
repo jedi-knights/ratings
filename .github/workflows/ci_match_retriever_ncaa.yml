@@ -1,5 +1,5 @@
 # tools/templates/.github/workflows/ci_match_retriever_ncaa.yml
-name: CI
+name: CI - match_retriever_ncaa
 
 on:
   push:
