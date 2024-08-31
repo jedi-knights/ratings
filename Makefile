@@ -1,28 +1,24 @@
-.PHONY: venv install format lint
+# Variables
+VENV_DIR = .venv
+PYTHON = $(VENV_DIR)/bin/python
+PIP = $(VENV_DIR)/bin/pip
+ACTIVATE = source $(VENV_DIR)/bin/activate
 
-.DEFAULT_GOAL := lint
+# Targets
+.PHONY: all venv install test clean
 
-env:
-	@echo "Creating virtual environment..."
-	@python3 -m venv .venv
+all: venv install
 
-install:
-	@echo "Upgrading pip..."
-	@pip install --upgrade pip
+venv:
+	python3 -m venv $(VENV_DIR)
 
-	@echo "Installing pinned pip dependencies..."
-	@pip install -r pip-requirements.txt
+install: venv
+	$(ACTIVATE) && $(PIP) install -r pip-requirements.txt -r dev-requirements.txt
 
-	@echo "Installing shared development dependencies..."
-	@pip install -r dev-requirements.txt
+test: install
+	$(ACTIVATE) && pytest
 
-format:
-	@echo "Running black..."
-	@black .
-
-	@echo "Running isort..."
-	@isort .
-
-lint: format
-	@echo "Running pylint..."
-	@pylint .
+clean:
+	rm -rf $(VENV_DIR)
+	find . -type d -name "__pycache__" -exec rm -r {} +
+	find . -type f -name "*.pyc" -exec rm -f {} +

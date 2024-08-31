@@ -1,0 +1,36 @@
+# tools/templates/.github/workflows/ci_{{ library_name }}.yml
+name: CI
+
+on:
+  push:
+    paths:
+      - 'libs/{{ library_name }}/**'
+  pull_request:
+    paths:
+      - 'libs/{{ library_name }}/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m venv .venv
+        source .venv/bin/activate
+        pip install -r $(git rev-parse --show-toplevel)/pip-requirements.txt
+        pip install -r $(git rev-parse --show-toplevel)/dev-requirements.txt
+        pip install -r libs/{{ library_name }}/requirements.txt
+
+    - name: Run tests
+      run: |
+        source .venv/bin/activate
+        pytest
