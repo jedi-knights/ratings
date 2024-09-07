@@ -14,7 +14,6 @@ venv:
 
 install: venv
 	$(ACTIVATE) && $(PIP) install -r pip-requirements.txt -r dev-requirements.txt
-	$(ACTIVATE) && $(PIP) install -e tools
 
 test: install
 	$(ACTIVATE) && pytest
@@ -23,3 +22,7 @@ clean:
 	rm -rf $(VENV_DIR)
 	find . -type d -name "__pycache__" -exec rm -r {} +
 	find . -type f -name "*.pyc" -exec rm -f {} +
+
+
+freeze:
+	$(PIP) freeze > requirements.txt

@@ -12,7 +12,7 @@ from enum import StrEnum
 
 import requests
 
-from ratings.models import State, Country, Organization, Club, Team
+from ratings.models import State, Country, Organization, Club, Team, Event
 
 PREFIX = 'https://public.totalglobalsports.com'
 
@@ -261,7 +261,7 @@ def get_events_by_organization_id(organization_id: int) -> list[int]:
     return event_ids
 
 
-def get_events_by_organization(organization: Organization) -> list[int]:
+def get_event_ids_by_organization(organization: Organization) -> list[int]:
     """
     Returns a list of events retrieved from the TGS API by organization.
 
@@ -270,16 +270,50 @@ def get_events_by_organization(organization: Organization) -> list[int]:
     """
     return get_events_by_organization_id(organization.id)
 
+def get_event_by_id(event_id: int) -> Event:
+    response = requests.get(urljoin(PREFIX, f'/api/Event/get-org-event-by-eventID/{event_id}'))
+    response.raise_for_status()
+
+    json_data = response.json()
+    json_data = json_data.get('data')
+
+    if json_data is None:
+        return None
+
+    event = Event()
+
+    event.id = int(json_data.get('eventID'))
+    event.name = json_data.get('eventName')
+    event.org_id = int(json_data.get('orgID'))
+    event.org_name = json_data.get('orgName')
+    event.org_season_id = int(json_data.get('orgSeasonID'))
+    event.org_season_name = json_data.get('orgSeasonName')
+
+    return event
+
+def get_events_by_organization(organization: Organization) -> list[Event]:
+    event_ids = get_event_ids_by_organization(organization)
+
+    events = []
+    for event_id in event_ids:
+        event = get_event_by_id(event_id)
+
+        if event is None:
+            continue
+
+        events.append(event)
+
+    return events
 
 if __name__ == '__main__':
     states = get_states()
     countries = get_countries()
     organizations = get_organizations(ecnl_only=True)
 
-    organization_clubs = {}
-    for organization in organizations:
-        clubs = get_clubs_by_organization(organization)
-        organization_clubs[organization.name] = clubs
+    # organization_clubs = {}
+    # for organization in organizations:
+    #     clubs = get_clubs_by_organization(organization)
+    #     organization_clubs[organization.name] = clubs
 
     # for state in states:
     #     print(state)
@@ -295,5 +329,12 @@ if __name__ == '__main__':
     # for club in ecnl_girls_clubs:
     #     print(club.full_name)
 
-    print(get_organization_by_id(9))
+    organization = get_organization_by_name(OrganizationName.ECNL_GIRLS)
+    events = get_events_by_organization(organization)
+
+    for event in events:
+        print(event)
+
+
+
 
