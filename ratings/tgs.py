@@ -1,5 +1,7 @@
 """
 This module provides a set of functions to interact with the Total Global Sports (TGS) API.
+
+see https://github.com/jedi-knights/ecnl/blob/main/pkg/services/tgs.go
 """
 import os
 import csv
