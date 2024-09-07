@@ -14,6 +14,7 @@ venv:
 
 install: venv
 	$(ACTIVATE) && $(PIP) install -r pip-requirements.txt -r dev-requirements.txt
+	$(ACTIVATE) && $(PIP) install -e tools
 
 test: install
 	$(ACTIVATE) && pytest

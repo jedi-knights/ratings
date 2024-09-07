@@ -1,9 +1,0 @@
-# tools/templates/pyproject.toml
-[tool.poetry]
-name = "match_retriever_nwsl"
-version = "0.1.0"
-description = ""
-authors = []
-
-[tool.poetry.dependencies]
-python = "^3.8"
