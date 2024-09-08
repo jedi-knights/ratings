@@ -256,8 +256,13 @@ def get_events_by_organization_id(organization_id: int) -> list[int]:
 
     event_ids = []
     for club in clubs:
+        if club.event_id == 0:  # Skip clubs without an event ID
+            continue
+
         if club.event_id not in event_ids:
             event_ids.append(club.event_id)
+
+    event_ids.sort()
 
     return event_ids
 
@@ -306,6 +311,21 @@ def get_events_by_organization(organization: Organization) -> list[Event]:
 
     return events
 
+
+def get_events(ecnl_only: bool = False) -> list[Event]:
+    organizations = get_organizations(ecnl_only=ecnl_only)
+
+    events = []
+    for organization in organizations:
+        organization_events = get_events_by_organization(organization)
+        events.extend(organization_events)
+
+    # Sort the events by name
+    events.sort(key=lambda x: x.name)
+
+    return events
+
+
 def get_match_results_by_club_id_and_event_id(club_id: int, event_id: int, include_future: bool = False) -> list[Match]:
     if club_id == 0 or event_id == 0:
         return []
@@ -320,33 +340,33 @@ def get_match_results_by_club_id_and_event_id(club_id: int, event_id: int, inclu
     date_format = '%Y-%m-%dT%H:%M:%S'
 
     matches = []
+    match_ids = set()
 
     for item in schedule_list:
         match = Match()
 
         match.meta['matchID'] = item.get('matchID')
-        match.meta['gameDate'] = item.get('gameDate')
+        match.meta['gameDate'] = item.get('gameDate', '').strip()
         match.meta['hometeamID'] = item.get('hometeamID')
         match.meta['homeTeamClubID'] = item.get('homeTeamClubID')
         match.meta['awayTeamID'] = item.get('awayTeamID')
         match.meta['awayTeamClubID'] = item.get('awayTeamClubID')
-        match.meta['gameTime'] = item.get('gameTime')
-        match.meta['flight'] = item.get('flight')
-        match.meta['division'] = item.get('division')
-        match.meta['division'] = item.get('division')
-        match.meta['homeclublogo'] = item.get('homeclublogo')
-        match.meta['awayclublogo'] = item.get('awayclublogo')
-        match.meta['homeTeam'] = item.get('homeTeam')
-        match.meta['awayTeam'] = item.get('awayTeam')
+        match.meta['gameTime'] = item.get('gameTime', '').strip()
+        match.meta['flight'] = item.get('flight', '').strip()
+        match.meta['division'] = item.get('division', '').strip()
+        match.meta['homeclublogo'] = item.get('homeclublogo', '').strip()
+        match.meta['awayclublogo'] = item.get('awayclublogo', '').strip()
+        match.meta['homeTeam'] = item.get('homeTeam', '').strip()
+        match.meta['awayTeam'] = item.get('awayTeam', '').strip()
         match.meta['complex'] = item.get('complex')
         match.meta['venue'] = item.get('venue')
         match.meta['scheduleID'] = item.get('scheduleID')
         match.meta['homeTeamScore'] = item.get('homeTeamScore')
         match.meta['awayTeamScore'] = item.get('awayTeamScore')
-        match.meta['eventName'] = item.get('eventName')
-        match.meta['eventLogo'] = item.get('eventLogo')
-        match.meta['startDate'] = item.get('startDate')
-        match.meta['endDate'] = item.get('endDate')
+        match.meta['eventName'] = item.get('eventName', '').strip()
+        match.meta['eventLogo'] = item.get('eventLogo', '').strip()
+        match.meta['startDate'] = item.get('startDate', '').strip()
+        match.meta['endDate'] = item.get('endDate', '').strip()
         match.meta['eventTypeID'] = item.get('eventTypeID')
 
         match.date = datetime.strptime(match.meta.get('gameDate'), date_format)
@@ -359,6 +379,12 @@ def get_match_results_by_club_id_and_event_id(club_id: int, event_id: int, inclu
             match.id = int(value)
         else:
             match.id = -1
+
+        if match.id <= 0:  # Skip matches without an ID
+            continue
+
+        if match.id in match_ids:  # Check if match already exists
+            continue
 
         match.home_team = match.meta.get('homeTeam')
         match.away_team = match.meta.get('awayTeam')
@@ -375,15 +401,48 @@ def get_match_results_by_club_id_and_event_id(club_id: int, event_id: int, inclu
         else:
             match.away_score = 0
 
-
-
+        match_ids.add(match.id)
         matches.append(match)
 
     return matches
 
 
-def get_match_results_by_division(division: str) -> list[Match]:
-    pass
+def get_match_results_by_club(club: Club) -> list[Match]:
+    return get_match_results_by_club_id_and_event_id(club.id, club.event_id)
+
+
+def get_matches(gender: str, year: str, organization: Organization) -> list[Match]:
+    clubs = get_clubs_by_organization(organization)
+
+    matches = []
+    match_ids = set()
+
+    if gender == 'girls':
+        target_division = f'G20{year}'
+    else:
+        target_division = f'B20{year}'
+
+    for club in clubs:
+        club_matches = get_match_results_by_club(club)
+        for match in club_matches:
+            if match.id in match_ids:
+                continue
+
+            if match.meta.get('division') == target_division:
+                match_ids.add(match.id)
+                matches.append(match)
+
+    return matches
+
+
+def get_match_results(organization_id: int):
+    organization = get_organization_by_id(organization_id)
+    clubs = get_clubs_by_organization(organization)
+
+    for club in clubs:
+        print(club)
+
+
 
 if __name__ == '__main__':
     states = get_states()
@@ -401,30 +460,33 @@ if __name__ == '__main__':
     # for country in countries:
     #     print(country)
 
-    for organization in organizations:
-        print(organization)
+    # for organization in organizations:
+    #     print(organization)
 
     # ecnl_girls_clubs = get_clubs_by_organization_name('ECNL Girls')
     #
     # for club in ecnl_girls_clubs:
     #     print(club.full_name)
 
-    ecnl_girls = get_organization_by_name(OrganizationName.ECNL_GIRLS)
+    # ecnl_girls = get_organization_by_name(OrganizationName.ECNL_GIRLS)
     # events = get_events_by_organization(ecnl_girls)
     #
     # for event in events:
     #     print(event)
 
-    ecnl_girls_clubs = get_clubs_by_organization(ecnl_girls)
-    results = []
-    for club in ecnl_girls_clubs:
-        club_results = get_match_results_by_club_id_and_event_id(club_id=club.id, event_id=club.event_id)
-        if len(club_results) > 0:
-            results.extend(club_results)
+    # ecnl_girls_clubs = get_clubs_by_organization(ecnl_girls)
+    # results = []
+    # for club in ecnl_girls_clubs:
+    #     club_results = get_match_results_by_club_id_and_event_id(club_id=club.id, event_id=club.event_id)
+    #     if len(club_results) > 0:
+    #         results.extend(club_results)
+    #
+    # for result in results:
+    #     print(result)
 
-    for result in results:
-        print(result)
-
+    events = get_events()
+    for event in events:
+        print(event)
 
 
 
