@@ -10,6 +10,7 @@ from datetime import datetime
 from urllib.parse import urljoin
 from typing import Optional
 from enum import StrEnum
+from ratings.dict_utils import read_str_value, read_int_value, read_datetime_value
 
 import requests
 
@@ -325,51 +326,6 @@ def get_events(ecnl_only: bool = False) -> list[Event]:
 
     return events
 
-
-def _read_str_value(record: dict, key: str) -> str:
-    """
-    Reads a string value from a record.
-    """
-    if not key in record:
-        return ''
-
-    value = record.get(key)
-    if value is None:
-        return ''
-
-    value = value.strip()
-
-    return value
-
-
-def _read_int_value(record: dict, key: str) -> int:
-    """
-    Reads an integer value from a record.
-    """
-    str_value = _read_str_value(record, key)
-
-    if str_value == '':
-        return 0
-
-    value = int(str_value)
-
-    return value
-
-def _read_datetime_value(record: dict, key: str) -> Optional[datetime]:
-    """
-    Reads a datetime value from a record.
-    """
-    date_format = '%Y-%m-%dT%H:%M:%S'
-    str_value = _read_str_value(record, key)
-
-    if str_value == '':
-        return None
-
-    value = datetime.strptime(str_value, date_format)
-
-    return value
-
-
 def _read_match(record: dict, match: Match) -> Match:
     """
     Reads a match from a dict record.
@@ -378,29 +334,29 @@ def _read_match(record: dict, match: Match) -> Match:
     :param match: The match to populate.
     :return: The populated match.
     """
-    match.meta['matchID'] = _read_int_value(record, 'matchID')
-    match.meta['gameDate'] = _read_str_value(record, 'gameDate')
-    match.meta['hometeamID'] = _read_int_value(record, 'hometeamID')
-    match.meta['homeTeamClubID'] = _read_int_value(record, 'homeTeamClubID')
-    match.meta['awayTeamID'] = _read_int_value(record, 'awayTeamID')
-    match.meta['awayTeamClubID'] = _read_int_value(record, 'awayTeamClubID')
-    match.meta['gameTime'] = _read_str_value(record, 'gameTime')
-    match.meta['flight'] = _read_str_value(record, 'flight')
-    match.meta['division'] = _read_str_value(record, 'division')
-    match.meta['homeclublogo'] = _read_str_value(record, 'homeclublogo')
-    match.meta['awayclublogo'] = _read_str_value(record, 'awayclublogo')
-    match.meta['homeTeam'] = _read_str_value(record, 'homeTeam')
-    match.meta['awayTeam'] = _read_str_value(record, 'awayTeam')
-    match.meta['complex'] = _read_str_value(record, 'complex')
-    match.meta['venue'] = _read_str_value(record, 'venue')
-    match.meta['scheduleID'] = _read_int_value(record, 'scheduleID')
-    match.meta['homeTeamScore'] = _read_int_value(record, 'homeTeamScore')
-    match.meta['awayTeamScore'] = _read_int_value(record, 'awayTeamScore')
-    match.meta['eventName'] = _read_str_value(record, 'eventName')
-    match.meta['eventLogo'] = _read_str_value(record, 'eventLogo')
-    match.meta['startDate'] = _read_datetime_value(record, 'startDate')
-    match.meta['endDate'] = _read_datetime_value(record, 'endDate')
-    match.meta['eventTypeID'] = _read_int_value(record, 'eventTypeID')
+    match.meta['matchID'] = read_int_value(record, 'matchID')
+    match.meta['gameDate'] = read_str_value(record, 'gameDate')
+    match.meta['hometeamID'] = read_int_value(record, 'hometeamID')
+    match.meta['homeTeamClubID'] = read_int_value(record, 'homeTeamClubID')
+    match.meta['awayTeamID'] = read_int_value(record, 'awayTeamID')
+    match.meta['awayTeamClubID'] = read_int_value(record, 'awayTeamClubID')
+    match.meta['gameTime'] = read_str_value(record, 'gameTime')
+    match.meta['flight'] = read_str_value(record, 'flight')
+    match.meta['division'] = read_str_value(record, 'division')
+    match.meta['homeclublogo'] = read_str_value(record, 'homeclublogo')
+    match.meta['awayclublogo'] = read_str_value(record, 'awayclublogo')
+    match.meta['homeTeam'] = read_str_value(record, 'homeTeam')
+    match.meta['awayTeam'] = read_str_value(record, 'awayTeam')
+    match.meta['complex'] = read_str_value(record, 'complex')
+    match.meta['venue'] = read_str_value(record, 'venue')
+    match.meta['scheduleID'] = read_int_value(record, 'scheduleID')
+    match.meta['homeTeamScore'] = read_int_value(record, 'homeTeamScore')
+    match.meta['awayTeamScore'] = read_int_value(record, 'awayTeamScore')
+    match.meta['eventName'] = read_str_value(record, 'eventName')
+    match.meta['eventLogo'] = read_str_value(record, 'eventLogo')
+    match.meta['startDate'] = read_datetime_value(record, 'startDate')
+    match.meta['endDate'] = read_datetime_value(record, 'endDate')
+    match.meta['eventTypeID'] = read_int_value(record, 'eventTypeID')
 
     match.id = match.meta.get('matchID')
     match.date = match.meta.get('gameDate')
