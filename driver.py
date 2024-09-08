@@ -97,7 +97,6 @@ def get_club_name_from_team_name(team_name: str) -> str:
     result = ' '.join(prefix)
     return result
 
-global_events = get_events(ecnl_only=False)
 
 def get_event_name_from_team_name(team_name: str, organization_id: int) -> Optional[str]:
     club_name = get_club_name_from_team_name(team_name)
@@ -112,7 +111,7 @@ def get_event_name_from_team_name(team_name: str, organization_id: int) -> Optio
                 event_id = row['event_id']
                 break;
 
-    for event in global_events:
+    for event in get_events(ecnl_only=False):
         if event.id == event_id:
             return event.name
 
@@ -189,7 +188,7 @@ def stats(file: str, organization_id: int):
 @click.command()
 @click.option('-t', '--team', required=True, type=str, help='Specify the team name.')
 @click.option('-o', '--organization-id', required=True, type=int, help='Specify the organization id.')
-def team2event(team_name: str, organization_id: int):
+def team2event(team: str, organization_id: int):
     click.echo('Retrieving events...')
     events = get_events()
     for event in events:
@@ -202,6 +201,7 @@ cli.add_command(matches)
 cli.add_command(clubs)
 cli.add_command(events)
 cli.add_command(stats)
+cli.add_command(team2event)
 
 if __name__ == '__main__':
     cli()

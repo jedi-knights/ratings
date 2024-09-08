@@ -11,6 +11,7 @@ from urllib.parse import urljoin
 from typing import Optional
 from enum import StrEnum
 from ratings.dict_utils import read_str_value, read_int_value, read_datetime_value
+from ratings.log import logger
 
 import requests
 
@@ -277,7 +278,7 @@ def get_event_ids_by_organization(organization: Organization) -> list[int]:
     """
     return get_events_by_organization_id(organization.id)
 
-def get_event_by_id(event_id: int) -> Event:
+def get_event_by_id(event_id: int) -> Optional[Event]:
     response = requests.get(urljoin(PREFIX, f'/api/Event/get-org-event-by-eventID/{event_id}'))
     response.raise_for_status()
 
@@ -314,6 +315,27 @@ def get_events_by_organization(organization: Organization) -> list[Event]:
 
 
 def get_events(ecnl_only: bool = False) -> list[Event]:
+    file_name = 'events.csv'
+
+    if os.path.isfile(file_name):
+        with open(file_name, 'r') as file:
+            reader = csv.DictReader(file)
+            next(reader)
+
+            events = []
+            for row in reader:
+                event = Event()
+                event.id = int(row['id'])
+                event.name = row['name']
+                event.org_id = int(row['org_id'])
+                event.org_name = row['org_name']
+                event.org_season_id = int(row['org_season_id'])
+                event.org_season_name = row['org_season_name']
+
+                events.append(event)
+
+        return events
+
     organizations = get_organizations(ecnl_only=ecnl_only)
 
     events = []
@@ -323,6 +345,12 @@ def get_events(ecnl_only: bool = False) -> list[Event]:
 
     # Sort the events by name
     events.sort(key=lambda x: x.name)
+
+    with open(file_name, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(['id', 'name', 'org_id', 'org_name', 'org_season_id', 'org_season_name'])
+        for event in events:
+            writer.writerow([event.id, event.name, event.org_id, event.org_name, event.org_season_id, event.org_season_name])
 
     return events
 
@@ -464,7 +492,7 @@ def get_match_results(organization_id: int):
     clubs = get_clubs_by_organization(organization)
 
     for club in clubs:
-        print(club)
+        logger.info(club)
 
 
 
@@ -479,24 +507,24 @@ if __name__ == '__main__':
     #     organization_clubs[organization.name] = clubs
 
     # for state in states:
-    #     print(state)
+    #     logger.info(state)
 
     # for country in countries:
-    #     print(country)
+    #     logger.info(country)
 
     # for organization in organizations:
-    #     print(organization)
+    #     logger.info(organization)
 
     # ecnl_girls_clubs = get_clubs_by_organization_name('ECNL Girls')
     #
     # for club in ecnl_girls_clubs:
-    #     print(club.full_name)
+    #     logger.info(club.full_name)
 
     # ecnl_girls = get_organization_by_name(OrganizationName.ECNL_GIRLS)
     # events = get_events_by_organization(ecnl_girls)
     #
     # for event in events:
-    #     print(event)
+    #     logger.info(event)
 
     # ecnl_girls_clubs = get_clubs_by_organization(ecnl_girls)
     # results = []
@@ -506,11 +534,11 @@ if __name__ == '__main__':
     #         results.extend(club_results)
     #
     # for result in results:
-    #     print(result)
+    #     logger.info(result)
 
     events = get_events()
     for event in events:
-        print(event)
+        logger.info(event)
 
 
 
