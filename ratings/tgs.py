@@ -326,6 +326,110 @@ def get_events(ecnl_only: bool = False) -> list[Event]:
     return events
 
 
+def _read_str_value(record: dict, key: str) -> str:
+    """
+    Reads a string value from a record.
+    """
+    if not key in record:
+        return ''
+
+    value = record.get(key)
+    if value is None:
+        return ''
+
+    value = value.strip()
+
+    return value
+
+
+def _read_int_value(record: dict, key: str) -> int:
+    """
+    Reads an integer value from a record.
+    """
+    str_value = _read_str_value(record, key)
+
+    if str_value == '':
+        return 0
+
+    value = int(str_value)
+
+    return value
+
+def _read_datetime_value(record: dict, key: str) -> Optional[datetime]:
+    """
+    Reads a datetime value from a record.
+    """
+    date_format = '%Y-%m-%dT%H:%M:%S'
+    str_value = _read_str_value(record, key)
+
+    if str_value == '':
+        return None
+
+    value = datetime.strptime(str_value, date_format)
+
+    return value
+
+
+def _read_match(record: dict, match: Match) -> Match:
+    """
+    Reads a match from a dict record.
+
+    :param record: The record to read.
+    :param match: The match to populate.
+    :return: The populated match.
+    """
+    match.meta['matchID'] = _read_int_value(record, 'matchID')
+    match.meta['gameDate'] = _read_str_value(record, 'gameDate')
+    match.meta['hometeamID'] = _read_int_value(record, 'hometeamID')
+    match.meta['homeTeamClubID'] = _read_int_value(record, 'homeTeamClubID')
+    match.meta['awayTeamID'] = _read_int_value(record, 'awayTeamID')
+    match.meta['awayTeamClubID'] = _read_int_value(record, 'awayTeamClubID')
+    match.meta['gameTime'] = _read_str_value(record, 'gameTime')
+    match.meta['flight'] = _read_str_value(record, 'flight')
+    match.meta['division'] = _read_str_value(record, 'division')
+    match.meta['homeclublogo'] = _read_str_value(record, 'homeclublogo')
+    match.meta['awayclublogo'] = _read_str_value(record, 'awayclublogo')
+    match.meta['homeTeam'] = _read_str_value(record, 'homeTeam')
+    match.meta['awayTeam'] = _read_str_value(record, 'awayTeam')
+    match.meta['complex'] = _read_str_value(record, 'complex')
+    match.meta['venue'] = _read_str_value(record, 'venue')
+    match.meta['scheduleID'] = _read_int_value(record, 'scheduleID')
+    match.meta['homeTeamScore'] = _read_int_value(record, 'homeTeamScore')
+    match.meta['awayTeamScore'] = _read_int_value(record, 'awayTeamScore')
+    match.meta['eventName'] = _read_str_value(record, 'eventName')
+    match.meta['eventLogo'] = _read_str_value(record, 'eventLogo')
+    match.meta['startDate'] = _read_datetime_value(record, 'startDate')
+    match.meta['endDate'] = _read_datetime_value(record, 'endDate')
+    match.meta['eventTypeID'] = _read_int_value(record, 'eventTypeID')
+
+    match.id = match.meta.get('matchID')
+    match.date = match.meta.get('gameDate')
+    match.home_team = match.meta.get('homeTeam')
+    match.away_team = match.meta.get('awayTeam')
+    match.home_score = match.meta.get('homeTeamScore')
+    match.away_score = match.meta.get('awayTeamScore')
+
+    return match
+
+def _should_include_match(match: Match, include_future: bool = False) -> bool:
+    """
+    Determines if a match should be included in the results
+
+    :param match: The match to check.
+    :param include_future: Whether to include future matches.
+    :return: True if the match should be included, otherwise False.
+    """
+    if match is None:
+        return False
+
+    if match.id <= 0:
+        return False
+
+    if not match.is_future():
+        return True
+
+    return include_future
+
 def get_match_results_by_club_id_and_event_id(club_id: int, event_id: int, include_future: bool = False) -> list[Match]:
     if club_id == 0 or event_id == 0:
         return []
@@ -334,72 +438,17 @@ def get_match_results_by_club_id_and_event_id(club_id: int, event_id: int, inclu
     response.raise_for_status()
 
     json_data = response.json()
-    json_data = json_data.get('data')
-    schedule_list = json_data.get('eventPastScheduleList')
-
-    date_format = '%Y-%m-%dT%H:%M:%S'
+    data = json_data.get('data')
+    event_past_schedule_list = data.get('eventPastScheduleList')
 
     matches = []
     match_ids = set()
 
-    for item in schedule_list:
-        match = Match()
+    for item in event_past_schedule_list:
+        match = _read_match(item, Match())
 
-        match.meta['matchID'] = item.get('matchID')
-        match.meta['gameDate'] = item.get('gameDate', '').strip()
-        match.meta['hometeamID'] = item.get('hometeamID')
-        match.meta['homeTeamClubID'] = item.get('homeTeamClubID')
-        match.meta['awayTeamID'] = item.get('awayTeamID')
-        match.meta['awayTeamClubID'] = item.get('awayTeamClubID')
-        match.meta['gameTime'] = item.get('gameTime', '').strip()
-        match.meta['flight'] = item.get('flight', '').strip()
-        match.meta['division'] = item.get('division', '').strip()
-        match.meta['homeclublogo'] = item.get('homeclublogo', '').strip()
-        match.meta['awayclublogo'] = item.get('awayclublogo', '').strip()
-        match.meta['homeTeam'] = item.get('homeTeam', '').strip()
-        match.meta['awayTeam'] = item.get('awayTeam', '').strip()
-        match.meta['complex'] = item.get('complex')
-        match.meta['venue'] = item.get('venue')
-        match.meta['scheduleID'] = item.get('scheduleID')
-        match.meta['homeTeamScore'] = item.get('homeTeamScore')
-        match.meta['awayTeamScore'] = item.get('awayTeamScore')
-        match.meta['eventName'] = item.get('eventName', '').strip()
-        match.meta['eventLogo'] = item.get('eventLogo', '').strip()
-        match.meta['startDate'] = item.get('startDate', '').strip()
-        match.meta['endDate'] = item.get('endDate', '').strip()
-        match.meta['eventTypeID'] = item.get('eventTypeID')
-
-        match.date = datetime.strptime(match.meta.get('gameDate'), date_format)
-
-        if match.is_future() and not include_future:
+        if not _should_include_match(match, include_future):
             continue
-
-        value = match.meta.get('matchID')
-        if value is not None:
-            match.id = int(value)
-        else:
-            match.id = -1
-
-        if match.id <= 0:  # Skip matches without an ID
-            continue
-
-        if match.id in match_ids:  # Check if match already exists
-            continue
-
-        match.home_team = match.meta.get('homeTeam')
-        match.away_team = match.meta.get('awayTeam')
-
-        value = match.meta.get('homeTeamScore')
-        if value is not None:
-            match.home_score = int(value)
-        else:
-            match.home_score = 0
-
-        value = match.meta.get('awayTeamScore')
-        if value is not None:
-            match.away_score = int(value)
-        else:
-            match.away_score = 0
 
         match_ids.add(match.id)
         matches.append(match)
@@ -411,16 +460,35 @@ def get_match_results_by_club(club: Club) -> list[Match]:
     return get_match_results_by_club_id_and_event_id(club.id, club.event_id)
 
 
+def _generate_division(gender: str, year: str) -> str:
+    """
+    Generates a division based on the gender and year.
+
+    :param: gender
+    :param: year
+    :return: The division.
+    """
+    if gender == 'girls':
+        return f'G20{year}'
+
+    return f'B20{year}'
+
 def get_matches(gender: str, year: str, organization: Organization) -> list[Match]:
+    """
+    Returns a list of matches retrieved from the TGS API by gender and year for a specific organization.
+
+    Recall that the organizations are typically
+    - ECNL
+    - ECNL Regional League
+    - Pre-
+
+    """
     clubs = get_clubs_by_organization(organization)
 
     matches = []
     match_ids = set()
 
-    if gender == 'girls':
-        target_division = f'G20{year}'
-    else:
-        target_division = f'B20{year}'
+    target_division = _generate_division(gender, year)
 
     for club in clubs:
         club_matches = get_match_results_by_club(club)

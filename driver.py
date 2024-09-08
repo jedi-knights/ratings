@@ -14,6 +14,17 @@ from ratings.tgs import get_matches
 from ratings.tgs import get_clubs_by_organization_id
 from ratings.tgs import get_events_by_organization_id
 from ratings.models.match import Match
+from ratings.stats import wins
+from ratings.stats import losses
+from ratings.stats import ties
+from ratings.stats import matches_played
+from ratings.stats import goals_for
+from ratings.stats import goals_against
+from ratings.stats import goal_differential
+from ratings.stats import points
+from ratings.stats import wp
+from ratings.stats import record
+from ratings.stats import goals_per_match
 
 @click.group()
 def cli():
@@ -78,79 +89,6 @@ def matches(gender: str, year: str, organization_id: int):
         for match in matches:
             date_only = match.date.strftime('%Y-%m-%d')
             writer.writerow([match.id, match.home_team, match.away_team, match.home_score, match.away_score, date_only])
-
-
-def wins(matches: list[Match], team: str) -> int:
-    count = 0
-    for match in matches:
-        if match.home_team == team and match.home_score > match.away_score:
-            count += 1
-        elif match.away_team == team and match.away_score > match.home_score:
-            count += 1
-    return count
-
-def losses(matches: list[Match], team: str) -> int:
-    count = 0
-    for match in matches:
-        if match.home_team == team and match.home_score < match.away_score:
-            count += 1
-        elif match.away_team == team and match.away_score < match.home_score:
-            count += 1
-    return count
-
-def ties(matches: list[Match], team: str) -> int:
-    count = 0
-    for match in matches:
-        if match.home_team == team and match.home_score == match.away_score:
-            count += 1
-        elif match.away_team == team and match.away_score == match.home_score:
-            count += 1
-    return count
-
-def matches_played(matches: list[Match], team: str) -> int:
-    count = 0
-    for match in matches:
-        if match.home_team == team or match.away_team == team:
-            count += 1
-    return count
-
-def goals_for(matches: list[Match], team: str) -> int:
-    count = 0
-    for match in matches:
-        if match.home_team == team:
-            count += match.home_score
-        elif match.away_team == team:
-            count += match.away_score
-    return count
-
-def goals_against(matches: list[Match], team: str) -> int:
-    count = 0
-    for match in matches:
-        if match.home_team == team:
-            count += match.away_score
-        elif match.away_team == team:
-            count += match.home_score
-    return count
-
-def record(matches: list[Match], team: str) -> str:
-    return f"{wins(matches, team)}-{losses(matches, team)}-{ties(matches, team)}"
-
-def goal_differential(matches: list[Match], team: str) -> int:
-    return goals_for(matches, team) - goals_against(matches, team)
-
-def points(matches: list[Match], team: str) -> int:
-    return wins(matches, team) * 3 + ties(matches, team)
-
-
-def wp(matches: list[Match], team: str) -> float:
-    if matches_played(matches, team) == 0:
-        return 0.0
-    return round(wins(matches, team) / matches_played(matches, team), 2)
-
-def goals_per_match(matches: list[Match], team: str) -> float:
-    if matches_played(matches, team) == 0:
-        return 0.0
-    return round(goals_for(matches, team) / matches_played(matches, team), 2)
 
 
 def get_club_name_from_team_name(team_name: str) -> str:
