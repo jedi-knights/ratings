@@ -190,9 +190,47 @@ def stats(file: str, organization_id: int):
 @click.option('-o', '--organization-id', required=True, type=int, help='Specify the organization id.')
 def team2event(team: str, organization_id: int):
     click.echo('Retrieving events...')
+
     events = get_events()
+
+    # Read the clubs for the specified organization.
+    clubs = get_clubs_by_organization_id(organization_id)
+
+    # Figure out which club the team belongs to.
+    club_name = get_club_name_from_team_name(team)
+
+    # Find the club in the list of clubs.
+    selected_club = None
+    for club in clubs:
+        current_club_name = club.name
+
+        if '-' in current_club_name:
+            current_club_name = current_club_name.replace('-', ' ')
+            while '  ' in current_club_name:
+                current_club_name = current_club_name.replace('  ', ' ')
+
+        if current_club_name == club_name:
+            selected_club = club
+            break
+
+    if selected_club is None:
+        click.echo(f"Club '{club_name}' not found.")
+        return
+
+    # Find the event in the list of events.
+    selected_event = None
+
     for event in events:
-        click.echo(event)
+        if event.id == selected_club.event_id:
+            selected_event = event
+            break
+
+    if selected_event is None:
+        click.echo(f"Event not found for club '{club_name}'.")
+        return
+
+    click.echo(f"Team '{team}' belongs to event '{selected_event.name}'.")
+
 
 cli.add_command(countries)
 cli.add_command(states)
