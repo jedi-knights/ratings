@@ -14,7 +14,11 @@ class Match:
     def __init__(self):
         self.id = 0
         self.home_team = None
+        self.home_team_id = 0
+        self.home_team_club_id = 0
         self.away_team = None
+        self.away_team_id = 0
+        self.away_team_club_id = 0
         self.home_score = 0
         self.away_score = 0
         self.date = datetime.now()
@@ -27,5 +31,9 @@ class Match:
         return str(self)
 
     def is_future(self):
+        # if self.date is a string in the format 'YYYY-MM-DDTHH:MM:SS' convert it to a datetime object
+        if isinstance(self.date, str):
+            self.date = datetime.strptime(self.date, '%Y-%m-%dT%H:%M:%S')
+
         return self.date > datetime.now()
 

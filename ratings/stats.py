@@ -156,20 +156,122 @@ def points(matches: list[Match], team: str) -> int:
     return wins(matches, team) * 3 + ties(matches, team)
 
 
-def wp(matches: list[Match], team: str) -> float:
+def wp(matches: list[Match], team: str, number_of_digits: int = 2) -> float:
     """
     Returns the winning percentage for a given team in a list of matches.
 
     Parameters:
         matches (list[Match]): A list of Match objects.
         team (str): The team to calculate the winning percentage for.
+        number_of_digits (int): The number of digits to round to.
 
     Returns:
         float: The winning percentage for the given team.
     """
     if matches_played(matches, team) == 0:
         return 0.0
-    return round(wins(matches, team) / matches_played(matches, team), 2)
+    
+    return round(wins(matches, team) / matches_played(matches, team), number_of_digits)
+
+def owp(matches: list[Match], team: str, number_of_digits: int = 2) -> float:
+    """
+    Returns the opponents' winning percentage for a given team in a list of matches.
+    
+    :param matches: 
+    :param team:
+    :param number_of_digits: 
+    :return: 
+    """
+    opponents_wp = []
+
+    for match in matches:
+        if match.home_team == team:
+            opponent = match.away_team
+            opponent_matches = [m for m in matches if m.home_team == opponent or m.away_team == opponent]
+            opponent_wins = wins(opponent_matches, opponent)
+            opponent_losses = losses(opponent_matches, opponent)
+            opponent_ties = ties(opponent_matches, opponent)
+            opponent_matches_played = matches_played(opponent_matches, opponent)
+
+            # Exclude the match against the given team
+            if match.away_team == opponent:
+                if match.home_score > match.away_score:
+                    opponent_wins -= 1
+                elif match.home_score < match.away_score:
+                    opponent_losses -= 1
+                else:
+                    opponent_ties -= 1
+                opponent_matches_played -= 1
+
+            if opponent_matches_played > 0:
+                opponents_wp.append((opponent_wins + 0.5 * opponent_ties) / opponent_matches_played)
+
+        elif match.away_team == team:
+            opponent = match.home_team
+            opponent_matches = [m for m in matches if m.home_team == opponent or m.away_team == opponent]
+            opponent_wins = wins(opponent_matches, opponent)
+            opponent_losses = losses(opponent_matches, opponent)
+            opponent_ties = ties(opponent_matches, opponent)
+            opponent_matches_played = matches_played(opponent_matches, opponent)
+
+            # Exclude the match against the given team
+            if match.home_team == opponent:
+                if match.home_score > match.away_score:
+                    opponent_wins -= 1
+                elif match.home_score < match.away_score:
+                    opponent_losses -= 1
+                else:
+                    opponent_ties -= 1
+                opponent_matches_played -= 1
+
+            if opponent_matches_played > 0:
+                opponents_wp.append((opponent_wins + 0.5 * opponent_ties) / opponent_matches_played)
+
+    if not opponents_wp:
+        return 0.0
+
+    return round(sum(opponents_wp) / len(opponents_wp), number_of_digits)
+
+def oowp(matches: list[Match], team: str, number_of_digits: int = 2) -> float:
+    """
+    Returns the opponents' opponents' winning percentage for a given team in a list of matches.
+    
+    :param matches: 
+    :param team:
+    :param number_of_digits: 
+    :return: 
+    """
+    opponents_owp = []
+
+    for match in matches:
+        if match.home_team == team:
+            opponent = match.away_team
+        elif match.away_team == team:
+            opponent = match.home_team
+        else:
+            continue
+
+        opponents_owp.append(owp(matches, opponent))
+
+    if not opponents_owp:
+        return 0.0
+
+    return round(sum(opponents_owp) / len(opponents_owp), number_of_digits)
+
+def rpi(matches: list[Match], team: str, number_of_digits: int = 2) -> float:
+    """
+    Returns the Rating Percentage Index (RPI) for a given team in a list of matches.
+    
+    :param matches: 
+    :param team:
+    :param number_of_digits: 
+    :return: 
+    """
+    team_wp = wp(matches, team, number_of_digits)
+    team_owp = owp(matches, team, number_of_digits)
+    team_oowp = oowp(matches, team, number_of_digits)
+
+    return round(0.25 * team_wp + 0.50 * team_owp + 0.25 * team_oowp, number_of_digits)
 
 def goals_per_match(matches: list[Match], team: str) -> float:
     """
@@ -184,4 +286,5 @@ def goals_per_match(matches: list[Match], team: str) -> float:
     """
     if matches_played(matches, team) == 0:
         return 0.0
+
     return round(goals_for(matches, team) / matches_played(matches, team), 2)

@@ -185,7 +185,6 @@ def get_clubs_by_organization_id(organization_id: int) -> list[Club]:
     if os.path.exists(file_name):
         with open(file_name, 'r') as file:
             reader = csv.DictReader(file)
-            next(reader)
 
             clubs = []
             for row in reader:
@@ -282,20 +281,19 @@ def get_event_by_id(event_id: int) -> Optional[Event]:
     response = requests.get(urljoin(PREFIX, f'/api/Event/get-org-event-by-eventID/{event_id}'))
     response.raise_for_status()
 
-    json_data = response.json()
-    json_data = json_data.get('data')
+    json_response = response.json()
+    data = json_response.get('data')
 
-    if json_data is None:
+    if data is None:
         return None
 
     event = Event()
-
-    event.id = int(json_data.get('eventID'))
-    event.name = json_data.get('eventName')
-    event.org_id = int(json_data.get('orgID'))
-    event.org_name = json_data.get('orgName')
-    event.org_season_id = int(json_data.get('orgSeasonID'))
-    event.org_season_name = json_data.get('orgSeasonName')
+    event.id = read_int_value(data, 'eventID')
+    event.name = read_str_value(data, 'eventName')
+    event.org_id = read_int_value(data, 'orgID')
+    event.org_name = read_str_value(data, 'orgName')
+    event.org_season_id = read_int_value(data, 'orgSeasonID')
+    event.org_season_name = read_str_value(data, 'orgSeasonName')
 
     return event
 
@@ -320,7 +318,6 @@ def get_events(ecnl_only: bool = False) -> list[Event]:
     if os.path.isfile(file_name):
         with open(file_name, 'r') as file:
             reader = csv.DictReader(file)
-            next(reader)
 
             events = []
             for row in reader:
@@ -364,9 +361,9 @@ def _read_match(record: dict, match: Match) -> Match:
     """
     match.meta['matchID'] = read_int_value(record, 'matchID')
     match.meta['gameDate'] = read_str_value(record, 'gameDate')
-    match.meta['hometeamID'] = read_int_value(record, 'hometeamID')
+    match.meta['homeTeamID'] = read_int_value(record, 'hometeamID')
     match.meta['homeTeamClubID'] = read_int_value(record, 'homeTeamClubID')
-    match.meta['awayTeamID'] = read_int_value(record, 'awayTeamID')
+    match.meta['awayTeamID'] = read_int_value(record, 'awayteamID')
     match.meta['awayTeamClubID'] = read_int_value(record, 'awayTeamClubID')
     match.meta['gameTime'] = read_str_value(record, 'gameTime')
     match.meta['flight'] = read_str_value(record, 'flight')
@@ -389,7 +386,11 @@ def _read_match(record: dict, match: Match) -> Match:
     match.id = match.meta.get('matchID')
     match.date = match.meta.get('gameDate')
     match.home_team = match.meta.get('homeTeam')
+    match.home_team_id = match.meta.get('homeTeamID')
+    match.home_team_club_id = match.meta.get('homeTeamClubID')
     match.away_team = match.meta.get('awayTeam')
+    match.away_team_id = match.meta.get('awayTeamID')
+    match.away_team_club_id = match.meta.get('awayTeamClubID')
     match.home_score = match.meta.get('homeTeamScore')
     match.away_score = match.meta.get('awayTeamScore')
 

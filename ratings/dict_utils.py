@@ -17,7 +17,8 @@ def read_str_value(record: dict, key: str, default_value: str = '') -> str:
     if value is None:
         return default_value
 
-    value = value.strip()
+    if isinstance(value, str):
+        value = value.strip()
 
     return value
 
