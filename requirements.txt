@@ -8,7 +8,7 @@ coverage==7.6.1
 dill==0.3.8
 execnet==2.1.1
 flake8==4.0.1
-idna==3.8
+idna==3.10
 iniconfig==2.0.0
 isort==5.10.1
 Jinja2==3.1.4
@@ -21,11 +21,11 @@ packaging==24.1
 parse==1.20.2
 parse_type==0.6.3
 pathspec==0.12.1
-platformdirs==4.2.2
+platformdirs==4.3.6
 pluggy==1.5.0
 pycodestyle==2.8.0
-pydantic==2.9.1
-pydantic_core==2.23.3
+pydantic==2.9.2
+pydantic_core==2.23.4
 pyflakes==2.4.0
 pylint==3.2.6
 pyright==1.1.239
@@ -36,11 +36,9 @@ pytest-xdist==3.6.1
 requests==2.32.3
 setuptools==74.0.0
 six==1.16.0
-SQLAlchemy==2.0.34
+SQLAlchemy==2.0.35
 sqlmodel==0.0.22
 tomlkit==0.13.2
-# Editable install with no version control (tools==0.1)
--e /Users/omar/src/github.com/jedi-knights/ratings/tools
 typing_extensions==4.12.2
-urllib3==2.2.2
+urllib3==2.2.3
 wheel==0.44.0
