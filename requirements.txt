@@ -1,3 +1,4 @@
+annotated-types==0.7.0
 astroid==3.2.4
 black==22.3.0
 certifi==2024.8.30
@@ -23,6 +24,8 @@ pathspec==0.12.1
 platformdirs==4.2.2
 pluggy==1.5.0
 pycodestyle==2.8.0
+pydantic==2.9.1
+pydantic_core==2.23.3
 pyflakes==2.4.0
 pylint==3.2.6
 pyright==1.1.239
@@ -33,7 +36,11 @@ pytest-xdist==3.6.1
 requests==2.32.3
 setuptools==74.0.0
 six==1.16.0
+SQLAlchemy==2.0.34
+sqlmodel==0.0.22
 tomlkit==0.13.2
+# Editable install with no version control (tools==0.1)
+-e /Users/omar/src/github.com/jedi-knights/ratings/tools
 typing_extensions==4.12.2
 urllib3==2.2.2
 wheel==0.44.0
