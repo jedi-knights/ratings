@@ -25,6 +25,7 @@ clean:
 	find . -type f -name "*.pyc" -exec rm -f {} +
 	find . -type f -name "*.log" -exec rm -f {} +
 	find . -type f -name "*.csv" -exec rm -f {} +
+	find . -type f -name "*.db" -exec rm -f {} +
 
 freeze:
 	pip3 freeze > requirements.txt
